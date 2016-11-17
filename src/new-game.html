@@ -1,0 +1,241 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="helper-functions.html">
+
+<dom-module id="new-game">
+	<template>
+		<style>
+			:host {
+				display: block;
+			}
+			.users-list{
+				@apply(--layout);
+				width: 100%;
+				overflow: auto;
+				min-height: 55px;
+			}
+			.section-title{
+				font-size: 18px;
+				margin-top: 10px;
+				margin-bottom: 5px;
+			}
+			.users-list.wrap{
+				@apply(--layout-wrap);
+				@apply(--layout-justified);
+			}
+			#newgameHeader{
+				margin-left: 10px;
+				font-weight: normal;
+				font-size: 24px;
+				margin-bottom: 10px;
+			}
+			.newgame-user{
+				display: -webkit-flex;
+				display: -moz-flex;
+				display: -ms-flex;
+				display: -o-flex;
+				display: flex;
+
+				-webkit-flex-direction: column;
+				-moz-flex-direction: column;
+				-ms-flex-direction: column;
+				-o-flex-direction: column;
+				flex-direction: column;
+
+				-ms-align-items: center;
+				align-items: center;
+
+				justify-content: center;
+				margin: 8px;
+			}
+			.newgame-user:first-child{
+				margin-left: 0;
+			}
+			.newgame-user .dp{
+				width: 50px; height: 50px; 
+				border-radius: 50%;
+				border: 2px solid #777; 
+				display: inline-block;
+				background-color:#ddd; 
+				background-size:cover;
+				background-position: cover; 
+			}
+			.newgame-user .username{
+				text-transform: lowercase;
+				margin-bottom: 8px;
+				text-align: center;
+			}
+			.newgame-user .username:first-letter{
+				text-transform: uppercase;
+			}
+			lp-modal-menu button{
+				background: transparent;
+				border: 2px solid #757575;
+				font-size: 1.2em;
+				text-transform: uppercase;
+				padding: 0.5em 0.8em;
+				border-radius: 10px;
+				margin-top: 5px;
+				margin-bottom: 15px;
+				text-align: center;
+				cursor: pointer !important;
+				color: #333;
+				opacity: 0.5;
+				pointer-events: none;
+			}
+			lp-modal-menu button[enabled="yes"]{
+				opacity: 1;
+				pointer-events: auto;
+			}
+			.selected{
+				outline-width: 3px;
+				outline-color: green;
+				outline: thick;
+				background-color: #ddd;
+				padding: 4px 8px;
+				/*margin: 0;*/
+				padding-bottom: 0;
+			}
+			.selected .username{
+				/*margin-bottom: 0;*/
+			}
+		</style>
+
+		<firebase-query
+	    	id="users"
+	    	path="/users"
+	    	data="{{opponents}}">
+	    </firebase-query>
+
+		<div style="width: 100%; background: #f0f0f0; overflow-x: auto;">
+			<h3 id="newgameHeader">New game</h3>
+			<div class="users-list">
+				<div class="newgame-user" style="margin-left: 10px;">
+					<div on-ta="addGame" class="dp" style="background-image: url(../images/passnplay.svg); margin-bottom: 5px;"></div>
+
+					<span class="username" style="text-transform: none;">Pass &amp; Play</span>
+				</div>
+
+				<div class="newgame-user" style="margin-left: 10px;">
+					<div on-tap="addChallengeGame" class="dp" style="background-image: url(../images/adduser.svg); margin-bottom: 5px;"></div>
+
+					<span class="username" style="text-transform: none;">Challenge</span>
+				</div>
+			</div>
+		</div>
+		<lp-modal-menu id="newgameModal" flat notrans="true">
+			<span class="section-title">Pick a theme:</span>
+			<div id="themes" class="users-list">
+				<template is="dom-repeat" items="{{themes}}" as=theme index-as=index>
+					<div class$="newgame-user {{_getSelectedClass(selectedTheme, theme)}}" on-tap="selectTheme">
+						<div class="dp" style$="background-image: url({{_getThemeBg(theme.colors)}}); border-radius: 0; border:0; height: 50px; width: 50px"></div>
+						<span class="username">{{theme.name}}</span>
+					</div>
+				</template>
+
+				<array-selector id="themeSelector" items="{{themes}}" selected="{{selectedTheme}}"></array-selector>
+			</div>
+
+			<div class="section-title">Pick an opponent: </div>
+
+			<div id="opponents" class="users-list">
+				<template is="dom-repeat" items="{{opponents}}" as=opponent index-as=index>
+					<template is="dom-if" if="{{_isNotMe(opponent.id, user.id)}}">
+						<div class$="newgame-user {{_getSelectedClass(selectedOpponent, opponent)}}" on-tap="selectOpponent">
+							<div class="dp" style$="background-image: url({{opponent.dp}})"></div>
+
+							<span class="username">{{opponent.username}}</span>
+						</div>
+					</template>
+				</template>
+
+				<array-selector id="opponentSelector" items="{{opponents}}" selected="{{selectedOpponent}}"></array-selector>
+
+				<template is="dom-if" if={{!users.length}}>
+					<div style="height: 80px; padding-bottom: 10px; width: inherit; -ms-align-items: center;align-items: center;display: -webkit-flex;display: -moz-flex;display: -ms-flex;display: -o-flex;display: flex; justify-content: center; font-size: 20px">
+						<svg width='60px' height='60px' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="uil-default"><rect x="0" y="0" width="100" height="100" fill="none" class="bk"></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(0 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(30 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.08333333333333333s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(60 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.16666666666666666s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(90 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.25s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(120 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.3333333333333333s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(150 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.4166666666666667s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(180 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.5s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(210 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.5833333333333334s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(240 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.6666666666666666s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(270 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.75s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(300 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.8333333333333334s' repeatCount='indefinite'/></rect><rect  x='46.5' y='40' width='7' height='20' rx='5' ry='5' fill='#0000000' transform='rotate(330 50 50) translate(0 -30)'>  <animate attributeName='opacity' from='1' to='0' dur='1s' begin='0.9166666666666666s' repeatCount='indefinite'/></rect></svg>
+					</div>
+				</template>
+			</div>
+
+			<button on-tap="addGame" enabled$="{{_thereIsAThemeAndOpponent(selectedTheme, selectedOpponent)}}">Start Game</button>
+		</lp-modal-menu>
+	</template>
+	<script>
+		Polymer({
+			is: 'new-game',
+			properties: {
+				user: {
+					notify: true
+				},
+				opponents: {
+					notify: true
+				},
+				newgame: {
+					value: {}
+				},
+			},
+
+			createGame: function(){
+				var newgame = NewGame();
+
+				newgame.began = false;
+				newgame.players[0].id = this.user.id;
+				newgame.players[0].name = this.user.username;
+				newgame.players[0].dp = this.user.dp;
+
+				return newgame;
+			},
+
+			addChallengeGame: function(e){
+				this.set("newgame", this.createGame());
+				this.set("newgame.type", 1);
+
+				var el = e.target;
+				var fromBox = el.getBoundingClientRect();
+				this.$.newgameModal.show(fromBox);
+			},
+
+			selectTheme: function(e){
+				this.$.themeSelector.select(e.model.theme);
+			},
+
+			selectOpponent: function(e){
+				this.$.opponentSelector.select(e.model.opponent);
+			},
+
+			addGame: function(){
+				var newgame = this.newgame;
+				var opponent = this.selectedOpponent;
+
+				newgame.players[1].id = opponent.id;
+				newgame.players[1].name = opponent.username;
+				newgame.players[1].dp = opponent.dp;
+				newgame.theme = this.selectedTheme;
+				this.$.newgameModal.hide();
+
+				this.fire("add-game", {newgame: this.newgame});
+			},
+
+			_thereIsAThemeAndOpponent: function(theme, opponent){
+				var query = theme && opponent && opponent.id;
+				return query ? "yes" : "no";
+			},
+
+			_getSelectedClass: function(selected, target){
+				if(!selected)
+					return "";
+
+				return selected.id == target.id ? "selected" : "";
+			},
+
+			_isNotMe: function(id, uid){
+				return id != uid;
+			},
+
+			_getThemeBg: function(colors){
+				return getTilesImage([], colors);
+			}
+		});
+	</script>
+</dom-module>

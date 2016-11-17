@@ -1,0 +1,50 @@
+<style>
+	#profiles{
+		display: -webkit-flex;
+		display: -moz-flex;
+		display: -ms-flex;
+		display: -o-flex;
+		display: flex;
+		background: blue;
+		height: calc(100vh - 100vw);
+
+		justify-content: center;
+		-ms-align-items: center;
+		align-items: center;
+	}
+	#content{
+		padding-bottom: 5px;
+		background: red;
+		height: calc(100vw - 65px);
+		display: -webkit-flex;
+		display: -moz-flex;
+		display: -ms-flex;
+		display: -o-flex;
+		display: flex;
+
+
+		-webkit-flex-wrap: wrap;
+		-moz-flex-wrap: wrap;
+		-ms-flex-wrap: wrap;
+		-o-flex-wrap: wrap;
+		flex-wrap: wrap;
+	}
+</style>
+<div id="profiles" ng-class="{'hidden' : playedTiles.length};">
+	<div ng-repeat="player in game.players" class="player" score="{{getPoints($index, playedTiles.length)}}" ng-class="{'me-true' : player.id != myid, 'active' : $index == game.turn &amp;&amp; !playedTiles.length}" ng-click="playerClicked($index)" style="background: url(images/{{player.dp}}); color: {{colors[$index]}}">
+		<span></span>
+	</div>
+</div>
+
+<div class="buttons header" style="box-shadow: none !important; margin-bottom: 0;">
+	<button id="back" ng-click="goHome()">back</button>
+	<button id="clear" ng-click="clearCharacters()">clear</button>
+	<button id="submit" ng-click="submitWord()">submit</button>
+	<button id="menu" ng-click="openMenu()">menu</button>
+</div>
+
+<div id="content">
+	<div class="tile" ng-class="{'played' : tile.played, 'last-played' : tile.lastplayed}" ng-repeat="tile in game.tiles" ng-click="tileClicked($index)" owner="{{tile.owner}}" style="background: {{colors[tile.owner]}}">
+		{{tile.letter}}
+	</div>
+</div>

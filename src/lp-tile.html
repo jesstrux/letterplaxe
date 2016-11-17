@@ -1,0 +1,125 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<dom-module id="lp-tile">
+	<template>
+		<style>
+			:host {
+				display: block;
+				position: relative;
+				margin: 0 1px;
+				display: inline-block;
+				background: #f0f0f0;
+				margin-top: 2px;
+				width: calc(20% - 2px);
+				font-family: verdana;
+				font-size: 1.5em;
+				height: calc(20vw - 2px);
+				cursor: pointer;
+				@apply(--layout);
+				@apply(--layout-center-center);
+				-webkit-tap-highlight-color: transparent;
+			}
+			:host(:hover), :host(:focus), :host(:active){
+				background: #f0f0f0;
+			}
+			:host(.animated){
+				-webkit-transition: transform 0.15s ease-out;
+				-o-transition: transform 0.15s ease-out;
+				transition: transform 0.15s ease-out;
+			}
+			:host(.moving), :host(.dragging){
+				z-index: 10;
+				box-shadow: 0 0 3px rgba(0,0,0,0.26);
+			}
+			:host(.played){
+				opacity: 0 !important;
+				z-index: 3;
+				pointer-events: none;
+			}
+		</style>
+		<content></content>
+	</template>
+	<script>
+		Polymer({
+			is: 'lp-tile',
+
+			properties: {
+
+			},
+
+			listeners:{
+				"tap" : "_onTap",
+				"down" : "_onDown",
+				"up" : "_onUp",
+				"tracky" : "_onTrack"
+			},
+
+			_onTap: function(event) {
+		    	this.fire('tapped');
+		    },
+
+			_onDown: function(event) {
+		    	this.down = true;
+		    	// console.log("Down!");
+		    },
+
+		    _onUp: function(event) {
+		    	// console.log("Up!");
+		    	if(this.down){
+		    		this.down = false;
+		    		this.classList.remove('dragging');
+		    		this.fire('released');
+		    	}
+		    },
+
+			_onTrack: function(event, detail) {
+				// console.log("Track!");
+		        event.stopPropagation();
+		        switch (event.detail.state) {
+		          case 'start':
+		            this._trackStart(event);
+		            break;
+		          case 'track':
+		            this._trackTile(event, detail);
+		            break;
+		          case 'end':
+		            this._trackEnd();
+		            break;
+		        }
+		    },
+
+		    _trackStart: function(event) {
+		    	this._h = this.offsetHeight;
+		        this._w = this.offsetWidth;
+		        
+		        this.classList.add('dragging');
+		        this.dragging = true;
+		    },
+
+		    _trackTile: function(e) {
+		        if (!this.dragging) {
+		          this._trackStart(e);
+		        }
+
+		        this.translateTile(e.detail.dx, e.detail.dy);
+		    },
+
+		    translateTile: function(dx, dy){
+		        var s = this.style;
+		        var transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+
+		        s.transform = s.webkitTransform = transform;
+		    },
+
+		    _trackEnd: function() {
+		        var s = this.style;
+		        s.transform = s.webkitTransform = '';
+
+		        this.dragging = false;
+		        this.classList.remove('dragging');
+		        this.down = false;
+		    }
+		});
+	</script>
+</dom-module>

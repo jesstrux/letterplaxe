@@ -1,0 +1,126 @@
+<script>
+	window.LetterPlaceBehaviors = window.LetterPlaceBehaviors || {};
+
+	LetterPlaceBehaviors.gameBehavior = {
+		properties: {
+			gameId: {
+				value: 'g'+(Math.floor(Math.random() * 10000) + 1265)
+			},
+			turn : {
+				notify: true,
+				value: 0
+			},
+		    next : {
+		    	notify: true,
+				value: 1
+			},
+		    theme : {
+		    	notify: true,
+		    	value: new Object()
+		    },
+		    lastupdated : {
+		    	notify: true,
+		    	value: new Date()
+		    },
+		    players: {
+		    	notify: true,
+		    	value: new Array()
+		    },
+		    playerOne: {
+		    	notify: true,
+		    	observer: "playerOneChanged"
+		    },
+		    playerTwo: {
+		    	notify: true,
+		    	observer: "playerTwoChanged"
+		    },
+		    words : {
+		    	notify: true,
+		    	value: new Array()
+		    },
+		    lastword : {
+		    	notify: true,
+		    	value: null
+		    },
+		    tiles : {
+		    	notify: true,
+		    	value: new Array()
+		    },
+		    playedTiles: {
+		    	notify: true,
+		    	value: new Array()
+		    },
+		    __dpSrc: {
+				observer: "dpSrcChanged"
+			},
+		},
+
+		ready: function(){
+			var avatars = new Image();
+			avatars.onload = function(){
+				this.set("__dpSrc", avatars);
+			}.bind(this);
+
+			avatars.src = "images/avatars.png";
+		},
+
+		playerOneChanged: function(){
+			// console.log(this.playerOne);
+		},
+
+		playerTwoChanged: function(){
+			// console.log(this.playerTwo);
+		},
+
+		_getColor: function(theme, idx){
+			return theme.colors[idx];
+		},
+
+		dpSrcChanged: function(){
+			var playerOneDp = this._getDpFromImage(this.__dpSrc);
+			var playerTwoDp = this._getDpFromImage(this.__dpSrc);
+
+			this.set("playerOne", this._getPlayerInfo());
+			this.set("playerTwo", this._getPlayerInfo());
+
+			this.set("playerOne.dp", playerOneDp.dp);
+			this.set("playerOne.dpIdx", playerOneDp.idx);
+
+			this.set("playerTwo.dp", playerTwoDp.dp);
+			this.set("playerTwo.dpIdx", playerTwoDp.idx);
+		},
+
+		_getPlayerInfo: function(){
+			var info;
+
+			var randomIdx = Math.floor(Math.random() * 54) + 1065;
+			info = {
+				id: 'pl'+randomIdx,
+	        	name : 'Player ' + randomIdx,
+	        	points : 0
+	        };
+
+			return info;
+		},
+
+		_getDpFromImage: function(img, idx){
+			var __c = canvas = document.createElement('canvas');
+			var __ctx = __c.getContext('2d');
+			__c.width = __c.height = 80;
+
+			var map = [{"x0":81,"x1":163,"y0":0,"y1":82},{"x0":162,"x1":244,"y0":0,"y1":82},{"x0":243,"x1":325,"y0":0,"y1":82},{"x0":324,"x1":406,"y0":0,"y1":82},{"x0":405,"x1":487,"y0":0,"y1":82},{"x0":0,"x1":82,"y0":81,"y1":163},{"x0":81,"x1":163,"y0":81,"y1":163},{"x0":162,"x1":244,"y0":81,"y1":163},{"x0":243,"x1":325,"y0":81,"y1":163},{"x0":324,"x1":406,"y0":81,"y1":163},{"x0":405,"x1":487,"y0":81,"y1":163},{"x0":0,"x1":82,"y0":162,"y1":244}];
+
+			if(!idx)
+				idx = Math.floor(Math.random() * (map.length - 1));
+
+			var c = map[idx];
+
+			__ctx.drawImage(img, c.x0, c.y0, 80, 80, 0, 0, 80, 80);
+
+			var dp = new Image();
+			dp.src = __c.toDataURL();
+
+			return {idx: idx, dp: dp};
+		}
+	}
+</script>

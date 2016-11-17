@@ -1,0 +1,90 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<dom-module id="loading-screen">
+	<template>
+		<style>
+			:host{
+				height: 100%;
+				width: 100%;
+				@apply(--layout-vertical);
+				@apply(--layout-center-center);
+			}
+			:host h3, :host p{
+				margin: 0;
+				font-family: consolas;
+			}
+			:host h3{
+				font-size: 25px;
+			}
+			:host p{
+				font-size: 18px;
+			}
+			.logo-image{
+				height:150px;width:150px;
+				margin-bottom: 10px;
+			}
+
+			.layout:not([hidden]){
+				@apply(--layout-vertical);
+				@apply(--layout-center);
+			}
+
+			button{
+				border: none;
+				font-size: 18px;
+				min-width: 200px;
+				padding: 10px 20px;
+				color: #000;
+				background-color: #f9f9f9;
+				box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+				margin-top: 30px;
+			}
+
+			button.fb{
+				background-color: #3b5998;
+				color: #fff;
+			}
+
+			button + button{
+				margin-top: 15px;
+			}
+		</style>
+		
+		<template is="dom-if" if={{!nologo}}>
+			<img class="logo-image" src="../images/logo.png" alt="">
+		</template>
+		<template is="dom-if" if={{!notitle}}>
+			<h3>Letter Place</h3>
+		</template>
+		<template is="dom-if" if={{!nomessage}}>
+			<p hidden$="{{!loadingApp}}">
+				{{message}}
+			</p>
+		</template>
+		<content></content>
+	</template>
+	<script>
+		Polymer({
+			is: 'loading-screen',
+			properties: {
+				nologo: {
+					notify: true,
+					value: false
+				},
+				nomessage: {
+					notify: true,
+					value: false
+				},
+				notitle: {
+					notify: true,
+					value: false
+				},
+				message: {
+					notify: true,
+					value: "Loading..."
+				}
+			}
+		});
+	</script>
+</dom-module>

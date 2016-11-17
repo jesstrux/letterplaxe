@@ -1,0 +1,25 @@
+<div class="profiles" ng-class="{'hidden' : playedTiles.length};">
+	<div ng-repeat="player in game.players" class="player" score="{{getPoints($index, playedTiles.length)}}" ng-class="{'me-true' : player.id != myid, 'active' : $index == game.turn &amp;&amp; !playedTiles.length}" ng-click="playerClicked($index)" style="background: url(images/{{player.dp}}); color: {{colors[$index]}}">
+		<span></span>
+	</div>
+</div>
+
+<div class="buttons header" style="box-shadow: none !important; margin-bottom: 0;">
+	<button id="back" ng-click="goHome()">back</button>
+	<button id="clear" ng-click="clearCharacters()">clear</button>
+	<button id="submit" ng-click="submitWord()">submit</button>
+	<button id="menu" ng-click="openMenu()">menu</button>
+</div>
+
+<div class="content" style="top: 40px; background: #d1d1d1; height: calc(100% - 40px)">
+	<div class="drop-area" style="background: #f5f5f5; backgroun: red;height: 80px; margin-botto: 20px;">
+		<div class="tile" ng-repeat="idx in playedTiles" ng-click="removeTile($index)" owner="{{getTile(idx).owner}}" style="background: {{colors[getTile(idx).owner]}}">
+			{{getTile(idx).letter}}
+		</div>
+	</div>
+	<div class="tiles-container" style="padding-bottom: 5px;">
+		<div class="tile" ng-class="{'played' : tile.played, 'last-played' : tile.lastplayed}" ng-repeat="tile in game.tiles" ng-click="tileClicked($index)" owner="{{tile.owner}}" style="background: {{colors[tile.owner]}}">
+			{{tile.letter}}
+		</div>
+	</div>
+</div>

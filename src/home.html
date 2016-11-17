@@ -1,0 +1,77 @@
+<div class="header" style="height: 60px; line-height: 60px; box-shadow: 0 1px 5px 2px rgba(0, 0, 0, 0.26); padding: 0 20px; background: #f9f9f9; color: #333; margin-bottom: 4px; display: -webkit-flex;display: -moz-flex;display: -ms-flex;display: -o-flex;display: flex; justify-content: space-between;">
+	<span style="margin-top: 0; font-size: 1.6em;">Spell striker</span>
+	<span style="padding-right: 15px;">{{user.name}}</span>
+</div>
+<div class="content">
+	<div class="big-card" ng-if="!user">
+		<div class="big-card-content">
+			<div style="padding-top: 20px; margin-bottom: 5px;">
+				<span style="font-size: 1.8em; color: #555">Hello there,</span>
+				<p style="margin-top: 0; font-size: 1.4em; color: #999">
+					To get started, pick a username and an avatar.
+				</p>
+			</div>
+			<div style="margin-bottom: 5px;">
+				<p style="color: #999">Avatar</p>
+				<span ng-click="setAvatar($index)" ng-repeat="dp in avatars" ng-class="{'faded' : !newuser.avatar || newuser.avatar != dp }" style="border:1px solid #ddd;display: inline-block; height: 50px; width: 50px; background: url(images/{{dp}}); background-size: cover; background-repeat: no-repeat; margin-left: {{$index * 5}}px;"></span>
+				<p style="margin-top: 20px">
+					<span style="color: #999">Username: {{username}}</span><br>
+					<input placeholder="Enter username" type="text" ng-model="newuser.name" style="margin-top: 10px;border-width: 0; border-bottom-width: 1px; border-color: #777; background: transparent; outline: none; font-size: 17px; width: 100%">
+				</p>
+			</div>
+		</div>
+		<div class="big-card-actions" style="margin-top: 0;border-to: 1px solid #ddd;">
+			<button ng-disabled="!newuser.name || !newuser.avatar" ng-click="registerUser()">
+				SAVE
+			</button>
+		</div>
+	</div>
+	<div class="big-card" ng-if="user">
+		<div class="big-card-content">
+			<div style="padding-top: 20px; margin-bottom: 5px;">
+				<span style="font-size: 1.8em; color: #555">Start a new game</span>
+				<p style="margin-top: 0; font-size: 1.4em; color: #999">
+					pick a theme
+				</p>
+			</div>
+			<div style="margin-bottom: 5px;">
+				<span ng-click="setTheme(key)" ng-repeat="(key, value) in themes" ng-class="{'faded' : theme &amp;&amp; theme != key }" style="display: inline-block; margin-right:5px; border-left: 25px solid {{value[0]}}; border-right: 25px solid {{value[1]}}; border-top: 25px solid {{value[0]}}; border-bottom: 25px solid {{value[1]}}"></span>
+			</div>
+		</div>
+		<div class="big-card-actions" style="margin: 10px 0;border-top: 1px solid #ddd;">
+			<button ng-disabled="!theme" ng-click="startNewGame()">OK</button>
+		</div>
+	</div>
+
+
+	<a ui-sref="game({gameId : game.id})" class="big-card" ng-repeat="game in games | orderBy : '-lastupdated'">
+		<div class="big-card-content">
+			<div style="margin-top: 15px;display: -webkit-flex;display: -moz-flex;display: -ms-flex;display: -o-flex;display: flex; justify-content: center; -ms-align-items: center;align-items: center;">
+				<span style="display: inline-block; height: 50px; width: 50px; background: {{game.colors[0]}}; border-radius: 50%; margin-bottom: 5px;">
+				</span>
+				<span style="display: inline-block; margin-left: -35px; position: relative;top: 5px; height: 50px; width: 50px; background: {{game.colors[1]}}; border-radius: 50%">
+				</span>
+
+				<span style="margin-left: auto; font-size: 2em">
+					<strong style="color: {{game.colors[0]}}">{{game.players[0].points}}</strong>
+					&nbsp; - &nbsp;
+					<strong style="color: {{game.colors[1]}}">{{game.players[1].points}} </strong>
+					&nbsp;
+				</span>
+			</div>
+			<div style="padding-top: 20px; margin-left: 10px; margin-bottom: 5px;">
+				<span style="font-size: 1.8em; color: #555">
+					{{game.players[game.turn].name}}'s turn
+				</span>
+				<p style="margin-top: 0; font-size: 1.4em; color: #999">
+					<span ng-if="!game.words.length">
+						no words played
+					</span>
+					<span ng-if="game.words.length">
+						{{game.players[game.next].name}} played {{game.lastword}}
+					</span>
+				</p>
+			</div>
+		</div>
+	</a>
+</div>

@@ -1,0 +1,57 @@
+.loadingScreen{
+  height: calc(100vh - 60px);
+  width: 100vw;
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+  display: -o-flex;
+  display: flex;
+
+  -webkit-flex-direction: column;
+  -moz-flex-direction: column;
+  -ms-flex-direction: column;
+  -o-flex-direction: column;
+  flex-direction: column;
+
+  -ms-align-items: center;
+  align-items: center;
+  justify-content: center;
+}
+.loadingScreen h3, .loadingScreen p{
+  margin: 0;
+  font-family: consolas;
+}
+.loadingScreen h3{
+  font-size: 25px;
+}
+.loadingScreen p{
+  font-size: 18px;
+}
+.logo-image{
+  height:150px;width:150px;
+  margin-bottom: 10px;
+}
+.layout:not([hidden]){
+  @apply(--layout-vertical);
+  @apply(--layout-center);
+}
+
+button{
+  border: none;
+  font-size: 18px;
+  min-width: 200px;
+  padding: 10px 20px;
+  color: #000;
+  background-color: #f9f9f9;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-top: 30px;
+}
+
+button.fb{
+  background-color: #3b5998;
+  color: #fff;
+}
+
+button + button{
+  margin-top: 15px;
+}

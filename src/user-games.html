@@ -1,0 +1,28 @@
+<dom-module id="user-games">
+	<template>
+		<style>
+			:host {
+				display: block;
+			}
+		</style>
+		<firebase-query
+	    	path="/users/{{app.user.id}}/games"
+	    	data="{{app.games}}">
+	    </firebase-query>
+
+	    <template is="dom-repeat" items={{array}} 
+	    	as=item index-as=index>
+	    	<firebase-query
+	    		>
+	    	</firebase-query>
+	    </template>
+	</template>
+	<script>
+		Polymer({
+			is: 'user-games',
+			app: {
+				notify: true
+			}
+		});
+	</script>
+</dom-module>

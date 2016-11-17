@@ -1,0 +1,169 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<dom-module id="games-list-item">
+	<template>
+		<style>
+			:host{
+				@apply(--layout);
+				@apply(--layout-center);
+				min-height: 48px;
+				background-color: #fff;
+				padding: 16px;
+				border-bottom: 1px solid #eee;
+				width: calc(100% - 32px);
+				position: relative;
+			}
+			:host(.selected){
+				padding-left: 82px;
+				width: calc(100% - 98px);
+			}
+			:host([long]){
+				@apply(--layout-vertical);
+				/*@apply(--layout-center-center);*/
+				width: 120px !important;
+				margin: 0 10px;
+				width: 200px;
+				padding: 10px 0;
+			}
+			.tiles-preview{
+				width: 50px;
+				height: 50px;
+				background-color: #f5f5f5;
+				margin-right: 16px;
+				overflow: hidden;
+			}
+			:host([long]) .tiles-preview{
+				width: 80px;
+				height: 80px;
+				background-size: cover;
+				left: 0;
+				top: 0;
+				margin-right: 0;
+			}
+			:host(.selected) .tiles-preview{
+				position: absolute;
+				left: 16px;
+				top: 16px;
+				z-index: 1;
+			}
+			#previewImg{
+				position: relative;
+				left: 0; top: 0;
+				/*width: 50px;*/
+				/*height: 50px;*/
+				z-index: 99999999999;
+			}
+			.item-text{
+				@apply(--layout-vertical);
+				@apply(--layout-flex);
+				@apply(--layout-wrap);
+				max-width: calc(100% - 115px);
+			}
+			:host([long]) .item-text{
+				display: none;
+			}
+			.item-text h3{
+				margin: 0;
+				font-size: 20px;
+				font-weight: normal;
+				overflow: hidden;
+				-ms-text-overflow: ellipsis;
+				text-overflow: ellipsis;
+			}
+			.item-text p{
+				margin: 0;
+				font-size: 16px;
+				font-weight: 500;
+				color: #777;
+			}
+			.item-secondary{
+				/*background-color: red;*/
+				margin-left: auto;
+			}
+			:host([long]) .item-secondary{
+				margin-top: 10px;
+				margin-left: 0;
+				font-size: 18px;
+			}
+		</style>
+
+		<firebase-document
+	    	path="/games/{{gameid}}"
+	    	data="{{game}}">
+	    </firebase-document>
+
+
+		<div>
+			<div id="preview" class="tiles-preview" style$="background-image: url({{game.summary_image}})">
+				<!-- <img id="previewImg" src$="{{game.summary_image}}" alt=""> -->
+			</div>
+		</div>
+		<div class="item-text">
+			<h3>
+				{{_getTurnMessage(user, game.turn, game.players)}}
+				<!-- {{_getTilesImage(game, game.theme.colors)}} -->
+			</h3>
+			<p style$="display: {{_showTagline(game.lastword)}}">
+				{{_getLastPlayedMessage(user, game.next, game.players, game.lastword)}}
+			</p>
+		</div>
+		<div class="item-secondary">{{_getScore(game.players.*, 0)}} - {{_getScore(game.players.*, 1)}}</div>
+	</template>
+	<script>
+		Polymer({
+			is: 'games-list-item',
+
+			listeners: {
+		      'tap': '_onTap',
+		    },
+			
+			properties: {
+				game: {
+					notify: true,
+					value: {},
+					observer: "_gameChanged"
+				},
+				user: {
+					notify: true,
+					value: {}
+				}
+			},
+
+			_gameChanged: function(){
+				// console.log("Game is changed!");
+			},
+
+			_onTap: function(e){
+				var el = this.$.preview;
+				this.fire('tapped', {el: el, item: this, game: this.game});
+			},
+
+			_getScore: function(players, index){
+				return players.base[index].points;
+			},
+
+			_getTurnMessage: function(user, turn, players){
+				if(players[turn].id == user.id)
+					return "Your turn";
+				else
+					return players[turn].name + "'s turn";
+			},
+
+			_getLastPlayedMessage: function(user, next, players, lastword){
+				if(players[next].id == user.id)
+					return "You played " + lastword.toUpperCase();
+				else	
+					return players[next].name + " played " + lastword.toUpperCase();
+			},
+
+			_showTagline: function(word){
+				return (word && word.length) > 0 ? "" : "none";
+			},
+
+			setTilesImage: function(){
+				// var image = this._getTilesImage(this.game, this.game.theme.colors);
+				this.$.previewImg.src = "images/female.jpg";
+			}
+		});
+	</script>
+</dom-module>

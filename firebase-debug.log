@@ -1,0 +1,29 @@
+[debug] ----------------------------------------------------------------------
+[debug] Command:      c:\Program Files\nodejs\node.exe c:\Users\WAKY\AppData\Roaming\npm\node_modules\firebase-tools\bin\firebase serve
+[debug] CLI Version:  3.0.8
+[debug] Platform:     win32
+[debug] Node Version: v6.4.0
+[debug] Time:         Wed Nov 09 2016 14:46:26 GMT+0300 (E. Africa Standard Time)
+[debug] ----------------------------------------------------------------------
+[debug] 
+[info] Starting Firebase development server...
+[info] 
+[info] Project Directory: D:\programming\Internet Programming\pwa\myapps\letterplace
+[info] Public Directory: /
+[info] 
+[info] Server listening at: http://localhost:5000
+[debug] ----------------------------------------------------------------------
+[debug] Command:      c:\Program Files\nodejs\node.exe c:\Users\WAKY\AppData\Roaming\npm\node_modules\firebase-tools\bin\firebase serve
+[debug] CLI Version:  3.0.8
+[debug] Platform:     win32
+[debug] Node Version: v6.4.0
+[debug] Time:         Thu Nov 17 2016 02:41:22 GMT+0300 (E. Africa Standard Time)
+[debug] ----------------------------------------------------------------------
+[debug] 
+[info] Starting Firebase development server...
+[info] 
+[info] Project Directory: d:\programming\Internet Programming\pwa\myapps\letterplace
+[info] Public Directory: /
+[info] 
+[info] Server listening at: http://localhost:5000
+[info] Shutting down...

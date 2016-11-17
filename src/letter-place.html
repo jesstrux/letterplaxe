@@ -1,0 +1,281 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="loading-screen.html">
+
+<dom-module id="letter-place">
+	<template>
+		<style>
+			:host {
+				display: block;
+				position: relative;
+				height: 100vh;
+				width: 100vw;
+				/*@apply(--layout-vertical);*/
+				/*overflow: hidden;*/
+				--theme-color-blue: #00bcd4;
+				--theme-color-pink: #e91e63;
+				--theme-color-green: #8bc34a;
+				--theme-color-brown: #5d4037;
+				--theme-color-teal: #009688;
+				--theme-color-orange: #ff9800;
+			}
+			loading-screen{
+				height: 100vh;
+
+				-webkit-transition: opacity 0.35s ease-out;
+				-o-transition: opacity 0.35s ease-out;
+				transition: opacity 0.35s ease-out;
+			}
+			game-view, login-page{
+				position: absolute;
+				top: 0;
+				width: 100vw;
+				height: 100vh;
+				opacity: 0;
+				pointer-events: none;
+
+				-webkit-transition: opacity 0.15s ease-out;
+				-o-transition: opacity 0.15s ease-out;
+				transition: opacity 0.15s ease-out;
+			}
+			game-view.loaded, login-page.loaded{
+				opacity: 1;
+				pointer-events: auto;
+			}
+		</style>
+
+		<firebase-app
+			auth-domain="letterplace-c103c.firebaseapp.com"
+			database-url="letterplace-c103c.firebaseio.com/"
+			api-key=" AIzaSyAPXq-MNVvxrtR93dgHL7-YlsR0FXf3liU">
+		</firebase-app>
+
+		<!-- <firebase-collection
+			id="users"
+	      	location="https://fir-somaapp.firebaseio.com/Users"
+	      	data="{{users}}"></firebase-collection> -->
+
+	    <firebase-document
+	    	id="usersProfileDocument">
+	    </firebase-document>
+
+		<firebase-auth id="fbauth" user="{{loggedUser}}" provider="facebook" on-error="handleError">
+		</firebase-auth>
+
+		<firebase-auth id="googleauth" user="{{loggedUser}}" provider="google" on-error="handleError">
+		</firebase-auth>
+
+		<loading-screen id="loadingScreen" message="Loading some few assets" style="height: 100vh"></loading-screen>
+
+		<game-view id="mainGame" app="{{app}}" on-logout="logout"></game-view>
+		<!-- <div id="mainGame"> -->
+			<!-- This is the main game -->
+		<!-- </div> -->
+
+		<login-page 
+			id="loginPage" 
+			app="{{app}}"
+			on-fb-login="loginWithFacebook"
+			on-google-login="loginWithGoogle"></login-page>
+	</template>
+	<script>
+		Polymer({
+			is: 'letter-place',
+
+			properties: {
+				app: {
+					notify: true,
+					value: function(){
+						return {
+							user: {},
+							newgame: {},
+							games: []
+						}
+					},
+					observer: "appChanged"
+				},
+
+				tempuser: {
+					value: {}
+				},
+
+				userAvailable:{
+					computed: "_checkUserAvailable(app.user)"
+				},
+
+				loadingApp: {
+					notify: true,
+					value: true
+				},
+
+				dictionaryLoading: {
+					notify: true,
+					value: false
+				},
+
+				assetsLoading: {
+					notify: true,
+					value: false
+				}
+			},
+
+			_checkUserAvailable: function(user){
+				return user.id && user.id.length;
+			},
+
+			ready: function(){
+				this.$.fbauth.auth.onAuthStateChanged(function(user){
+					this.handleLoginStatusChange(user);
+				}.bind(this));
+
+				// this.$.googleauth.auth.onAuthStateChanged(function(user){
+				// 	this.handleLoginStatusChange(user);
+				// }.bind(this));
+
+				// console.log("Let's do this baby!!!");
+				var themes = [
+					{id: 0,name: "Ornate",colors : ['#8bc34a', '#5d4037']},
+					{id: 1,name: "Chipper",colors : ['#00bcd4', '#e91e63']},
+					{id: 2,name: "Tepid",colors : ['#009688', '#ff9800']},
+					// {id: 3,name: "Somber",colors : ['#6b78AF', '#DCC7AA']},
+					{id: 3,name: "Vintage",colors : ['#CDA34F', '#636B46']},
+					{id: 4,name: "Stormy",colors : ['#494E6B', '#98878F']},
+					{id: 5,name: "Somber",colors : ['#E14658', '#3F3250']},
+				];
+				
+				this.set("app.themes", themes);
+			},
+
+			handleLoginStatusChange: function(user){
+				if(user){
+					this.$.usersProfileDocument.getStoredValue("/users/"+user.uid)
+					.then(function(data){
+						if(data.id && data.id.length){
+							this.set("app.user", data);
+							console.log("Found somn");
+							this.importHref('./src/game-view.html', function(){
+								this.$.mainGame.classList.add("loaded");
+								this.$.loginPage.classList.remove("loaded");
+								this.$.loadingScreen.style.opacity = 0;
+
+								setTimeout(function(){
+									this.$.loadingScreen.style.display = "none";
+								}.bind(this), 30);
+							}.bind(this), null, true);
+						}
+						else{
+							console.log("Found nothin' Registering....");
+							var name = user.displayName.split(" ")[0].toLowerCase();
+							this.set("app.user.username", name.substring(0, 1).toUpperCase() + name.substring(1));
+							this.set("app.user.provider", user.providerData[0].providerId);
+							this.set("app.user.dp", user.photoURL);
+							this.set("app.user.id", user.uid);
+
+							this.saveUser(this.app.user);
+						}
+					}.bind(this))
+					.catch(function(error){
+						console.log("Error", error);
+						var name = user.displayName.split(" ")[0].toLowerCase();
+						this.set("app.user.username", name.substring(0, 1).toUpperCase() + name.substring(1));
+						this.set("app.user.provider", user.providerData[0].providerId);
+						this.set("app.user.dp", user.photoURL);
+						this.set("app.user.id", user.uid);
+
+						this.saveUser(this.app.user);
+					}.bind(this));
+					// console.log();
+				}else{
+					this.$.loadingScreen.style.display = "flex";
+
+					this.importHref('src/login-page.html', function(){
+						this.$.mainGame.classList.remove("loaded");
+						this.$.loginPage.classList.add("loaded");
+						this.$.loadingScreen.style.opacity = 0;
+
+						setTimeout(function(){
+							this.$.loadingScreen.style.display = "none";
+						}.bind(this), 30);
+					}.bind(this), null, true);
+				}
+			},
+
+			saveUser: function(user){
+				this.$.usersProfileDocument.data = user;
+				this.$.usersProfileDocument.save("/users", user.id)
+				.then(function(){
+					console.log("Save successful!");
+
+					this.importHref('src/game-view.html', function(){
+						this.$.mainGame.classList.add("loaded");
+						this.$.loginPage.classList.remove("loaded");
+						this.$.loadingScreen.style.opacity = 0;
+
+						setTimeout(function(){
+							this.$.loadingScreen.style.display = "none";
+						}.bind(this), 30);
+					}.bind(this), null, true);
+				}.bind(this))
+				.catch(function(error){
+					console.log("Error occured!", error);
+				});
+			},
+
+			loginWithFacebook: function(){
+				this.$.fbauth.signInWithPopup().
+					then(function(){
+						// this.app.user.handler = 
+					})
+				    .catch(function(error) {
+				    	console.log("Login failed!" + error);
+					});
+			},
+
+			loginWithGoogle: function(){
+				this.$.googleauth.signInWithPopup()
+				    .catch(function(error) {
+				    	console.log("Login failed!" + error);
+					});
+			},
+
+			logout: function(){
+				console.log("Logging out!");
+
+				if(!this.app.user)
+					return;
+
+				switch(this.app.user.provider){
+					case 'facebook.com' : {
+						this.$.fbauth.signOut()
+						.then(function(){
+							this.handleLoginStatusChange();
+						}.bind(this))
+						.catch(function(){
+							console.error("Logout failed!");
+						});
+					}
+						break;
+					case 'google.com' : {
+						this.$.googleauth.signOut()
+						.then(function(){
+							this.handleLoginStatusChange();
+						}.bind(this))
+						.catch(function(e){
+							console.error("Logout failed!", e);
+						});
+					}
+						break;
+				}
+			},			
+
+			handleError: function(data){
+				console.log(data);
+			},
+
+			appChanged: function(){
+				// console.log(this.app);
+			}
+		});
+	</script>
+</dom-module>

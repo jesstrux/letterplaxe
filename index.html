@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=no">
+
+  <title>Letter Place</title>
+
+  <!-- <link rel="shortcut icon" sizes="32x32" href="/images/icon-32.png"> -->
+
+  <link rel="icon" href="favicon.ico">
+
+  <meta name="theme-color" content="#eee">
+  <link rel="manifest" href="/manifest.json">
+
+  <script>
+
+    // setup Polymer options
+    window.Polymer = {lazyRegister: true, dom: 'shadow'};
+
+    // load webcomponents polyfills
+    (function() {
+      if ('registerElement' in document
+          && 'import' in document.createElement('link')
+          && 'content' in document.createElement('template')) {
+        // browser has web components
+      } else {
+        // polyfill web components
+        var e = document.createElement('script');
+        e.src = '/bower_components/webcomponentsjs/webcomponents-lite.min.js';
+        document.head.appendChild(e);
+      }
+    })();
+
+    // load pre-caching service worker
+    // if ('serviceWorker' in navigator) {
+    //   window.addEventListener('load', function() {
+    //     navigator.serviceWorker.register('/service-worker.js');
+    //   });
+    // }
+
+  </script>
+
+  <!-- <link rel="import" href="/src/letter-place.html"> -->
+
+  <style>
+
+    body {
+      margin: 0;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      background-color: #eee;
+    }
+
+    /**{
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }*/
+
+    /*@media screen and (orientation:landscape) {
+
+      letter-place{
+        -ms-transform: rotate(-90deg);
+        -webkit-transform: rotate(-90deg);
+        transform: rotate(-90deg);
+        width: 100vw ;
+        height: 100vh ;
+        overflow: scroll;
+      }
+    }*/
+    #loading{
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+      background-color: inherit;
+    }
+  </style>
+  <link rel="stylesheet" href="css/shared.css">
+</head>
+<body>
+
+  <letter-place id="mainApp"></letter-place>
+  <div id="loading" class="loadingScreen" style="height: 100vh">
+    <img class="logo-image" src="../images/logo.png" alt="">
+    <h3>Letter Place</h3>
+    <p id="loadingMessage" hidden$="{{!loadingApp}}">Loading....</p>
+  </div>
+  <script src="src/newgame.js"></script>
+  <script>
+    var link = document.createElement('link');
+    link.rel = 'import';
+    link.href = 'src/letter-place.html';
+    //link.setAttribute('async', ''); // make it async!
+    link.onload = function(e) {
+      console.log("Loaded successfully");
+
+      setTimeout(function(){
+        document.getElementById('loading').style.display = "none";
+      }, 120);
+    };
+    link.onerror = function(e) {
+      console.log("Loadeding failed!");
+      document.getElementById('loadingMessage').innerText = "Loading failed, please try again!";
+    };
+
+    document.head.appendChild(link);
+  </script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/neon-animation/neon-shared-element-animatable-behavior">
+<link rel="import" href="../bower_components/neon-animation/neon-animations">
+
+<link rel="import" href="helper-functions.html">
+<link rel="import" href="games-list-item.html">
+<link rel="import" href="lp-modal-menu.html">
+<link rel="import" href="new-game.html">
+<dom-module id="games-list-page">
+	<template>
+		<style>
+			:host {
+				min-height: calc(100vh - 60px);
+				padding-top: 60px;
+				width: 100vw;
+				/*overflow: hidden;*/
+				@apply(--layout-vertical);
+				background-color: #fff;
+				position: relative;
+			}
+			#header{
+				position: fixed;
+				top: 0; left: 0;
+				width: calc(100% - 24px);
+				height: 60px;
+				z-index: 100000;
+				background-color: #f9f9f9;
+				padding: 0 16px;
+				padding-right: 8px;
+				font-size: 20px;
+				@apply(--layout);
+				@apply(--layout-center);
+				box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+			}
+			button{
+				font-size: 20px;
+				padding: 10px 20px;
+				color: #fff;
+				background-color: var(--theme-color-green);
+			}
+			#theDp{
+				height: 40px; width: 40px;
+				border-radius: 50%; 
+				background-color: #eee; 
+				background-size: cover;
+				background-position: center;
+				margin-left: 12px;
+			}
+			#user{
+				@apply(--layout);
+				@apply(--layout-center);
+				margin-left: auto;
+			}
+		</style>
+
+		<firebase-document
+		    id="newGameDocument"
+		    path="/games/">
+		</firebase-document>
+
+	    <firebase-query
+	    	path="/users/{{app.user.id}}/games"
+	    	data="{{app.games}}">
+	    </firebase-query>
+
+	    <firebase-document
+		    id="gameSaver">
+		</firebase-document>
+
+		<!-- <lp-toast id="toast"></lp-toast> -->
+
+		<div id="header">
+			Letterplace
+
+			<div id="user" style="margin-left: auto;">
+				<!-- {{app.user.username}} -->
+				<div id="theDp" on-tap="dpTapped" style="background-image: url({{app.user.dp}})"></div>
+			</div>
+		</div>
+
+		<new-game
+			user="{{app.user}}"
+			themes="{{app.themes}}"
+			on-add-game="addGame"></new-game>
+		
+		<div id="gameList">
+			<template id="gamesDomRepeat" is="dom-repeat" items="{{app.games}}" as=item index-as=index>
+				<games-list-item
+					on-tapped="viewGame" 
+					user="{{app.user}}"
+					gameid="{{item.id}}"
+					class$="{{_getSelectedClass(selected, index)}}">
+					</games-list-item>
+			</template>
+		</div>
+
+		<array-selector id="selector" items="{{app.games}}" selected="{{selected}}"></array-selector>
+	</template>
+	<script>
+		Polymer({
+			is: 'games-list-page',
+
+			behaviors: [Polymer.NeonSharedElementAnimatableBehavior],
+			properties: {
+				app: {
+					notify: true
+				},
+
+				selected: {
+					notify: true,
+					value: -1,
+					observer: "selectedChanged"
+				},
+				
+				curElement:{},
+				
+				animationConfig: {
+					value: function(){
+						return {
+							'entry': [{
+									name: 'hero-animation',
+									id: 'hero',
+									toPage: this
+								},
+								{
+									name: 'transform-animation',
+									node: this,
+									transformOrigin: "center",
+									transformFrom: "scale(1.5) translateX(50%)",
+									transformTo: "none",
+								}
+							],
+							'exit': [{
+									name: 'hero-animation',
+									id: 'hero',
+									fromPage: this
+								},
+								{
+									name: 'fade-out-animation',
+									node: this.$.header
+								},
+								{
+									name: 'fade-out-animation',
+									node: this.$.gameList
+								}
+							]
+						}
+					}
+				}
+			},
+
+
+			selectedChanged: function(){
+				// console.log(this.selected);
+			},
+
+			setEntryAnim: function(which){
+				if(!which){
+					var anim = [{name: 'hero-animation',id: 'hero',toPage: this},
+								{name: 'transform-animation',node: this,transformOrigin: "center",transformFrom: "scale(1.5) translateX(50%)",transformTo: "none"}];
+				}
+				else if(which == "nuthin"){
+					var anim = {name: 'fade-in-animation', node: this};
+				}
+				else if(which == "profile"){
+					var anim = [{name: 'hero-animation',id: 'hero',toPage: this},
+								{name: 'fade-in-animation', node: this},
+								{
+									name: 'transform-animation',
+									node: this,
+									transformOrigin: "top right",
+									transformFrom: "scale(0.9) translate3d(-20%, 20%, 0)",
+									transformTo: "none",
+								},
+								{name: 'reverse-ripple-animation', id: 'bg', toPage: this}];
+				}
+
+				this.set("animationConfig.entry", anim);
+			},
+
+			setExitAnim: function(which){
+				if(!which){
+					var anim = [{name: 'hero-animation',id: 'hero',fromPage: this},
+								{name: 'slide-up-animation',node: this.$.header},
+								{name: 'fade-out-animation',node: this},
+								{name: 'fade-out-animation',node: this.$.gameList}];
+				}
+				else if(which == "nuthin"){
+					var anim = {name: 'fade-out-animation', node: this};
+				}
+				else if(which == "profile"){
+					var anim = [{name: 'ripple-animation', id: 'bg', fromPage: this},
+								{name: 'fade-out-animation', node: this},
+								{
+									name: 'transform-animation',
+									node: this,
+									transformOrigin: "top right",
+									transformTo: "scale(0.8) translate3d(-80%, 60%, 0)",
+									transformFrom: "none",
+								},
+								{name: 'hero-animation',id: 'hero',fromPage: this}];
+				}
+
+				this.set("animationConfig.exit", anim);
+			},
+
+			_getSelectedClass: function(selected, index){
+				return selected == index ? "selected" : "";
+			},
+
+			arrayItem: function(change, index) {
+				return change.base[index];
+			},
+
+			viewGame: function(e){
+				var e = e || {};
+				e.model = e.model || {};
+				var el = e.detail.el;
+				var index = e.model.index || 0;
+				this.sharedElements = {
+					'hero': el
+				};
+
+				this.$.selector.select(index);
+				this.fire('view-game', {idx: index, game: e.detail.game});
+			},
+
+			dpTapped: function(e){
+				var el = e.target;
+				// console.log(el);
+				this.sharedElements = {
+					'hero': el,
+					'bg': this.$.user
+				};
+
+				this.setEntryAnim("profile");
+				this.setExitAnim("profile");
+
+				this.fire('show-profile');
+			},
+
+			addGame: function(e){
+				var newgame = e.detail.newgame;
+				var self = this;
+				// this.set("newgame", newgame);
+				this.$.newGameDocument.data = newgame;
+				this.$.newGameDocument.save("/games")
+				.then(function(id){
+					newgame.id = id;
+					self.$.gameSaver.data = {id: id};
+					self.$.gameSaver.save("/users/"+newgame.players[0].id+"/games", id)
+					.then(function(){
+						self.setEntryAnim("nuthin");
+						self.setExitAnim("nuthin");
+
+						if(newgame.type){
+							self.$.gameSaver.save("/users/"+newgame.players[1].id+"/games", id)
+							.then(function(){
+								console.log(newgame);
+								self.fire('view-game', {game: newgame});
+							});
+						}else{
+							self.fire('view-game', {game: newgame});
+						}
+					});
+				});
+			}
+		});
+	</script>
+</dom-module>

@@ -1,0 +1,122 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animated-pages">
+
+<link rel="import" href="helper-functions.html">
+<link rel="import" href="games-list-page.html">
+<link rel="import" href="game-page.html">
+<link rel="import" href="profile-page.html">
+
+<dom-module id="game-view">
+	<template>
+		<style>
+			:host {
+				display: block;
+				height: 100vh;
+				width: 100%;
+				position: relative;
+			}
+			loading-screen{
+				position: absolute;
+				background-color: #f0f0f0;
+				z-index: 9999999;
+			}
+		</style>
+
+		<iron-ajax
+		 	auto
+		 	url="lpdictionary.json"
+		 	handle-as="json"
+		 	last-response="{{app.dictionary}}"
+		 	loading="{{loadingDictionary}}"
+		 	on-response="handleResponse"></iron-ajax>
+
+
+		<template is="dom-if" if={{loadingDictionary}}>
+			<loading-screen message="Loading dictionary..." style="height: 100vh"></loading-screen>
+		</template>
+
+		<neon-animated-pages selected="{{curPage}}" style="height: 100%; width: 100%;">
+	    	<games-list-page
+	    		id="gameListPage"
+	    		app="{{app}}"
+	    		on-view-game="viewGame"
+	    		on-show-profile="viewProfile"></games-list-page>
+
+	    	<game-page
+	    		id="gameDetailPage"
+	    		dictionary="{{app.dictionary}}"
+				game="{{getSelectedGame(app.games, curGameIdx, app.newgame)}}"
+				user="{{app.user}}"
+				on-go-home="viewGamesList"></game-page>
+
+			<profile-page
+				id="profilePage"
+				user="{{app.user}}"
+				games="{{app.games}}"
+				on-go-back="viewGamesList">
+			</profile-page>
+		</neon-animated-pages>
+	</template>
+	<script>
+		Polymer({
+			is: 'game-view',
+			properties: {
+				curPage:{
+					notify: true,
+					value: 0
+				},
+				curGameIdx:{
+					notify: true,
+					value: -1
+				},
+				app: {
+					notify: true
+				},
+				games: {
+					notify: true,
+					value: new Array()
+				},
+				wordlist:{
+					notify: true
+				}
+			},
+
+			viewProfile: function(){
+				this.set("curPage", 2);
+			},
+
+			viewGame: function(e){
+				this.set("curPage", 1);
+
+				if(e.detail.game){
+					this.$.gameDetailPage.game = e.detail.game;
+				}
+
+			},
+
+			viewGamesList: function(e){
+				if(this.curPage == 1){
+					this.$.gameDetailPage.game = {};
+					this.$.gameDetailPage.gameStarted = false;
+				}
+
+				this.set("curPage", 0);
+
+				this.$.gameListPage.setEntryAnim();
+				this.$.gameListPage.setExitAnim();
+			},
+
+			getSelectedGame: function(games, curidx, newgame){
+				// console.log(games);
+				return games[curidx];
+				 // ? games[curidx] : newgame ;
+			},
+
+			handleResponse: function(){
+				console.log("dictionary loaded");
+				// console.log(this.app.dictionary.indexOf("water"));
+			}
+		});
+	</script>
+</dom-module>

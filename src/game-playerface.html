@@ -1,0 +1,84 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<dom-module id="game-playerface">
+	<template>
+		<style>
+			:host {
+				position: relative;
+				display: block;
+				@apply(--layout-vertical);
+				@apply(--layout-center);
+				@apply(--layout-start-justified);
+				padding: 0 20px;
+				height: calc(100% - 30px);
+				-webkit-tap-highlight-color: transparent;
+			}
+			#face{
+				width: 60px;
+				height: 60px;
+				color: #aaa;
+				border-radius: 50%;
+				border-width: 8px;
+				border-style: solid;
+				background-position: center !important;
+				background-size: cover !important;
+				background-repeat: no-repeat !important;
+				cursor: pointer;
+				overflow: hidden;
+			}
+			#face img{
+				width: inherit;
+				height: inherit;
+				border-radius: 50%;
+				border: none;
+			}
+			#score{
+				font-family: verdana;
+				font-size: 20px;
+				font-weight: 600;
+				text-align: center;
+				color: inherit;
+				/*margin-bottom: 2px;*/
+			}
+			span{
+				display: none;
+				border-style: solid;
+				border-width: 15px;
+				border-left:10px solid transparent;
+				border-right:10px solid transparent;
+				border-bottom:15px solid transparent;
+			}
+			:host([active]) span{
+				display: inline-block;
+			}
+		</style>
+		
+		<div id="face" class="me-true" style$="color: {{color}}; background: {{color}}">
+			<img src$="{{player.dp}}" alt="">
+		</div>
+		<div id="score">{{player.points}}</div>
+		<span style$="color: {{color}}"></span>
+	</template>
+	<script>
+		Polymer({
+			is: 'game-playerface',
+			listeners: {
+		      'tap': '_onTap',
+		    },
+			properties: {
+				player: {
+					notify: true,
+					value: new Object()
+				},
+				color: {
+					notify: true,
+					value: "#000"
+				}
+			},
+			_onTap: function(){
+				console.log("Byoop!");
+				this.fire("tapped");
+			}
+		});
+	</script>
+</dom-module>

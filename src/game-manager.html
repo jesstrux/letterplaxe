@@ -1,0 +1,146 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<dom-module id="game-manager">
+	<template>
+		<style>
+			:host{
+				display: block;
+			}
+		</style>
+		<iron-ajax
+		 	auto
+		 	url="wordlist.json"
+		 	handle-as="json"
+		 	loading="{{dictionaryLoading}}"
+		 	last-response="{{dictionary}}"
+		 	on-response="handleDictionaryLoaded"></iron-ajax>
+	</template>
+	<script src="newgame.js"></script>
+	<script>
+		Polymer({
+			is: 'game-manager',
+
+			ready: function(){
+				this.gameStarted = true;
+			},
+
+			properties: {
+				app: {
+					notify: true,
+					value: new Object()
+				},
+
+				dictionary: {
+					observer: "dictionaryChanged"
+				},
+
+				dictionaryLoading: {
+					type: Boolean,
+					value: false
+				},
+
+				themes: {
+					computed: "_getRandomTheme(gameStarted)",
+					observer: "themeChanged"
+				},
+
+				randomPlayers: {
+					computed: "_getRandomPlayers(gameStarted)",
+					observer: "randomPlayersChanged"
+				},
+
+				randomTiles: {
+					computed: "_getRandomTiles(gameStarted)",
+					observer: "randomTilesChanged"
+				},
+
+				gameStarted: {
+					value: false
+				},
+
+				theme: {
+					computed: "_getRandomTheme(gameStarted)",
+					observer: "themeChanged"
+				}
+			},
+
+			themeChanged: function(){
+				this.set("app.newgame.theme", this.theme);
+			},
+
+			dictionaryChanged: function(){
+				this.set("app.dictionary", this.dictionary);
+			},
+
+			randomPlayersChanged: function(){
+				this.set("app.newgame.players", this.randomPlayers);
+			},
+
+			randomTilesChanged: function(){
+				this.set("app.newgame.tiles", this.randomTiles);
+			},
+
+			_checkDictionaryLoaded: function(dict){
+				return dict && dict.length;
+			},
+
+			_getRandomPlayers: function(){
+	    		var players = new Array();
+	    		for (var i = 0; i < 2; i++) {
+	    			var player = {
+				        id: 'pl'+(Math.floor(Math.random() * 54) + 1065),
+				        name : 'Player '+(i+1),
+				        points : 0,
+				        dp : this._getRandomDp(i)
+				    }
+
+				    players.push(player);
+	    		};
+
+	    		return players;
+	    	},
+
+		 	_getRandomTiles: function(){
+				var letters = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+				var lettersArray = new Array();
+
+				for (var i = 0; i < 25; i++) {
+				    var rand = Math.floor(Math.random() * 26);
+				    lettersArray[i] = {
+				      owner  : null,
+				      locked : false,
+				      played : false,
+				      letter : letters[rand]
+				    };
+				}
+
+				return lettersArray;
+			},
+
+			_getRandomTheme: function(){
+				var themes = {
+			      2 : ['#8bc34a', '#5d4037'],
+			      1 : ['#00bcd4', '#e91e63'],
+			      3 : ['#009688', '#ff9800']
+			    };
+
+			    var rand = Math.floor(Math.random() * 3) + 1;
+			    // var rand = 1;
+				return {id: rand, colors: themes[rand]};
+			},
+
+			_getRandomDp: function(idx){
+				if(!idx)
+					var idx = Math.floor(Math.random() * 2);
+
+				var dps = ["male.jpg", "female.jpg"];
+
+				return "images/"+dps[idx];
+			},
+
+			handleDictionaryLoaded: function(){
+				console.log("Dictionary was loaded successfully!!!");
+			}
+		});
+	</script>
+</dom-module>

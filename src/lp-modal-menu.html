@@ -1,0 +1,183 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<dom-module id="lp-modal-menu">
+	<template>
+		<style>
+			:host{
+				@apply(--layout-vertical);
+				@apply(--layout-center-center);
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+				/*display: none;*/
+				pointer-events: none;
+				z-index: 9999999999999;
+			}
+			:host #BgShadow{
+				position: absolute;
+				top: 0;
+				left: 0;
+				height: 100%;
+				width: 100%;
+				background: rgba(0,0,0,0.75);
+				opacity: 0;
+				border-radius: 0;
+
+				-webkit-transition: opacity 0.35 ease-out;
+				-o-transition: opacity 0.35 ease-out;
+				transition: opacity 0.35 ease-out;
+			}
+			:host #MainContent{
+				position: relative;
+				background: white;
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.16);
+				padding: 10px 20px;
+				border-radius: 10px;
+				opacity: 0;
+				@apply(--layout-vertical);
+				@apply(--layout-wrap);
+				@apply(--layout-center-center);
+				max-width: calc(100% - 62px);
+				min-width: 220px;
+
+				/*-webkit-transform: scale(0.5) translate3d(200px, -200px, 0);
+				-ms-transform: scale(0.5) translate3d(200px, -200px, 0);
+				-o-transform: scale(0.5) translate3d(200px, -200px, 0);
+				transform: scale(0.5) translate3d(200px, -200px, 0);*/
+			}
+			:host(.show){
+				pointer-events: auto;
+			}
+			#MainContent.show{
+				opacity: 1;
+				border-radius: 10px;
+
+				-webkit-transition: all 0.3s ease-in-out;
+				-o-transition: all 0.3s ease-in-out;
+				transition: all 0.3s ease-in-out;
+			}
+			#MainContent.fall{
+				-webkit-transform: rotate(30deg) translateY(110%);
+				-ms-transform: rotate(30deg) translateY(110%);
+				-o-transform: rotate(30deg) translateY(110%);
+				transform: rotate(30deg) translateY(110%);
+			}
+			:host(.show) #BgShadow{
+				opacity: 1;
+
+				-webkit-transform: none;
+				-ms-transform: none;
+				-o-transform: none;
+				transform: none;
+			}
+			:host([flat]) #MainContent{
+				border-radius: 0 !important;
+			}
+		</style>
+		<div id="BgShadow" on-tap="hide"></div>
+		<div id="MainContent">
+			<content></content>
+		</div>
+	</template>
+	<script>
+		Polymer({
+			is: 'lp-modal-menu',
+			properties: {
+				open: {
+					notify: true,
+					observer: "_onOpenChanged"
+				},
+				notrans: {
+					notify: true,
+					value: true
+				},
+				flat: {
+					notify: true
+				},
+				tempTrans: {
+					value: ""
+				}
+			},
+			_onOpenChanged: function(){
+				if(this.open)
+					this.show();
+				else
+					this.hide();
+			},
+			show: function(from){
+				if(from){
+					var menu = this.$.MainContent;
+					var menuS = menu.style;
+					var menuBox = menu.getBoundingClientRect();
+
+					var sx = from.width / menuBox.width;
+					var sy = from.height / menuBox.height;
+					var tx = from.left - (menuBox.left + menuBox.width / 2);
+					var ty = from.top - (menuBox.top + menuBox.height / 2);
+
+					var scale = "scale("+ sx +", "+ sy +")";
+					var translate = "translate("+ tx +"px, "+ ty +"px)";
+					var tempTrans = translate + " " + scale;
+
+					this.set("tempTrans", tempTrans);
+					menuS.transform = menuS.webkitTransform = tempTrans;
+
+					this.classList.add("show");
+
+					setTimeout(function(){
+						menu.classList.add("show");
+
+						menuS.transform = "none";
+						// menuS.borderRadius = 0;
+					}.bind(this), 1);
+				}
+
+				else{
+					this.$.MainContent.classList.add("show");
+					this.classList.add("show");
+				}
+			},
+
+			hide: function(){
+				var s = this.$.MainContent.style;
+
+				if(this.tempTrans && this.tempTrans.length){
+					// console.log();
+					s.transform = s.webkitTransform = this.tempTrans;
+
+					setTimeout(function(){
+						this.$.MainContent.classList.remove("show");
+						this.classList.remove("show");
+						s.transform = s.webkitTransform = "none";
+					}.bind(this), 250);
+				}else{
+					this.$.MainContent.classList.remove("show");
+					this.classList.remove("show");
+				}
+
+				// if(!this.notrans){
+				// 	s.transform = s.webkitTransform = "rotate(-60deg)";
+				// }
+			
+				// setTimeout(function(){
+				// 	if(this.notrans){
+				// 		s.opacity = 0;
+				// 	}else{
+				// 		s.transform = s.webkitTransform = "rotate(30deg) translate3d(130px, 610px, 0)";
+				// 	}
+				// }.bind(this), 100);
+
+				// setTimeout(function(){
+				// 	this.classList.remove("show");
+				// 	this.$.MainContent.classList.remove("show");
+
+				// 	s.transform = s.webkitTransform = "none";
+				// }.bind(this), 350);
+			}
+		});
+	</script>
+</dom-module>

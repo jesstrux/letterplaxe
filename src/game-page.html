@@ -1,0 +1,863 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../bower_components/neon-animation/neon-shared-element-animatable-behavior">
+<link rel="import" href="../bower_components/neon-animation/neon-animations">
+
+<link rel="import" href="tween-max.html">
+<link rel="import" href="game-playerface.html">
+<link rel="import" href="lp-toast.html">
+<link rel="import" href="lp-tile.html">
+<link rel="import" href="lp-modal-menu.html">
+
+<dom-module id="game-page">
+	<template>
+		<style>
+			:host {
+				@apply(--layout-vertical);
+				position: relative;
+				height: 100vh;
+				width: 100vw;
+				--game-bg: #fcfcfc;
+				background: var(--game-bg);
+				position: relative;
+			}
+			#header{
+				position: relative;
+				@apply(--layout);
+				@apply(--layout-vertical);
+				@apply(--layout-flex);
+			}
+			#menus{
+				/*@apply(--layout);*/
+				position: relative;
+				@apply(--layout);
+				@apply(--layout-center-center);
+			}
+			.menu{
+				@apply(--layout);
+				@apply(--layout-center);
+				@apply(--layout-justified);
+				padding: 10px 5px;
+				position: absolute;
+				left: 2px; top: 0;
+				width: calc(100% - 15px);
+
+				-webkit-transition: transform 0.15s ease-out;
+				-o-transition: transform 0.15s ease-out;
+				transition: transform 0.15s ease-out;
+			}
+
+			#lettersManager{
+				opacity: 0;
+				-webkit-transform: translateY(-100%);
+				-ms-transform: translateY(-100%);
+				-o-transform: translateY(-100%);
+				transform: translateY(-100%);
+			}
+
+			#menus.active #default{
+				opacity: 0;
+				-webkit-transform: translateY(-100%);
+				-ms-transform: translateY(-100%);
+				-o-transform: translateY(-100%);
+				transform: translateY(-100%);
+			}
+
+			#menus.active #lettersManager{
+				opacity: 1;
+				-webkit-transform: translateY(0);
+				-ms-transform: translateY(0);
+				-o-transform: translateY(0);
+				transform: translateY(0);
+			}
+
+			#pointsContainer{
+				position: relative;
+				/*left: 0; right: 0;*/
+				margin: auto;
+				/*background-color: red;*/
+				display: inline-block;
+				pointer-events: none;
+			}
+
+			#pointsContainer .points{
+				display: inline-block;
+				width: 108px;
+				font-family: verdana;
+				font-size: 20px;
+				font-weight: 600;
+				text-align: center;
+				padding: 10px 5px;
+			}
+
+			.menu button{
+				/*border: 1px solid #444;*/
+				border: none;
+				padding: 5px;
+				background: transparent;
+				color: #444;
+				text-transform: uppercase;
+				cursor: pointer;
+				font-size: 15px;
+				font-weight: bold;
+				z-index: 2;
+			}
+
+			#submitBtn{
+				/*font-size: 12px;*/
+				background-color: #03a9f4;
+				color: white;
+				border-radius: 3px;
+			}
+
+			button:focus, button:active{
+				outline: none;
+				background: transparent;
+			}
+			#profilesAndDropArea{
+				position: absolute;
+				width: 100%; height: 100%;
+				top: 0; left: 0;
+				@apply(--layout-vertical);
+				pointer-events:none;
+				/*opacity: 0;*/
+			}
+			#profiles{
+				@apply(--layout);
+				@apply(--layout-center-center);
+				@apply(--layout-flex);
+				background: var(--game-bg);
+				padding-top: 30px;
+				z-index: 1;
+				/*opacity: 0;*/
+				pointer-events:auto;
+
+				-webkit-transition: transform 0.15s ease-out;
+				-o-transition: transform 0.15s ease-out;
+				transition: transform 0.15s ease-out;
+			}
+			#profiles.active{
+				-webkit-transform: translateY(-100%);
+				-ms-transform: translateY(-100%);
+				-o-transform: translateY(-100%);
+				transform: translateY(-100%);
+			}
+			#faces{
+				@apply(--layout);
+				position: relative;
+				z-index: 9999999999999999;
+			}
+			#droparea{
+				@apply(--layout);
+				@apply(--layout-center-center);
+				height: calc(20vw - 5px);
+				width: 100%;
+				position: absolute;
+				bottom: 5px;
+				left: 0;
+				width: 100%;
+				pointer-events: auto;
+			}
+
+			#content{
+				padding-bottom: 2px;
+				position: relative;
+				height: auto;
+				@apply(--layout);
+				@apply(--layout-wrap);
+				overflow: visible;
+				background-color: #f5f5f5;
+				min-height: calc(100vw - 10px);
+			}
+			.tile[owner="0"], .tile[owner="1"]{
+				color: #fff;
+			}
+			#droparea .tile{
+				z-index: 4 !important;
+			}
+
+			@media all and (min-width: 600px) {
+				:host {
+					width: 400px;
+				}
+				.tile{
+					height: calc(78px) !important;
+				}
+				#droparea{
+					height: calc(80px);
+				}
+			}
+			#toastNext{
+				margin-top: 70px !important;
+				margin-left: 80px !important;
+			}
+		</style>
+
+		<firebase-document
+		    id="gameDocument"
+		    path="games/{{game.id}}"
+		    data="{{savedGame}}">
+		</firebase-document>
+
+
+		<firebase-document
+		    id="gameTurnDocument"
+		    path="games/{{game.id}}/turn"
+		    data="{{gameTurn}}">
+		</firebase-document>
+
+		<lp-toast id="toastTurn"></lp-toast>
+
+		<lp-toast id="toastNext"></lp-toast>
+
+		<lp-toast id="toastMessage" animation="swing"></lp-toast>
+		
+		<div id="header">
+			<div id="menus" class$="{{_getIsPlaying(playedTiles.length)}}">
+				<div id="pointsContainer">
+					<span class="points" style$="color:{{_getColor(game.theme, 0)}}">
+						{{_getTempPoints(tempPoints.*, 0)}}
+					</span>
+					<span class="points" style$="color:{{_getColor(game.theme, 1)}}">
+						{{_getTempPoints(tempPoints.*, 1)}}
+					</span>
+				</div>
+				<div id="lettersManager" class="menu">
+					<button on-tap="clearButtonClicked">clear</button>
+					<button id="submitBtn" on-tap="submitWord">submit</button>
+				</div>
+				<div id="default" class="menu">
+					<button on-tap="goHome">back</button>
+
+					<!-- <div> -->
+						<!-- <button on-tap="screenshotGame">SHARE</button> -->
+						<button on-tap="openMenu">menu</button>
+					<!-- </div> -->
+				</div>
+			</div>
+			<div id="profilesAndDropArea">
+				<div id="profiles" class$="{{_getIsPlaying(playedTiles.length)}}">
+					<div id="faces">
+						<template is="dom-repeat" items={{game.players}} as=player index-as=index>
+							<game-playerface 
+							color="{{_getColor(game.theme, index)}}"
+							player="{{player}}"
+							active$="{{_isActive(index, game.turn)}}"
+							on-tapped="_playerFaceTapped"
+							></game-playerface>
+						</template>
+					</div>
+				</div>
+				<div id="droparea" on-drag-over="_somnOnTop">
+					<template is="dom-repeat" items={{playedTiles}} 
+						as=tile index-as=index>
+						<lp-tile class="tile"
+							on-tap="removeTile"
+							style$="color: {{_getTextColor(tile.owner)}};background: {{_getBg(game.theme.colors, tile.owner, tile.locked)}}">{{tile.letter}}
+						</lp-tile>
+					</template>
+				</div>
+			</div>
+		</div>
+		<div id="content">
+			<template is="dom-repeat" items={{game.tiles}} 
+				as=tile index-as=index>
+				<lp-tile on-tapped="playTile"
+					class$="{{_isPlayed(tile.played)}} {{_wasLastPlayed(tile.lastplayed)}}" 
+					style$="color: {{_getTextColor(tile.owner)}};background: {{_getBg(game.theme.colors, tile.owner, tile.locked)}}">{{tile.letter}}
+				</lp-tile>
+			</template>
+		</div>
+		<audio id="buttonClickSound" preload src="./push.mp3"></audio>
+
+		<lp-modal-menu id="menu"><button>Played Words</button></lp-modal-menu>
+	</template>
+	<script>
+		Polymer({
+			is: 'game-page',
+
+			behaviors: [
+		      Polymer.NeonSharedElementAnimatableBehavior
+		    ],
+
+			properties: {
+				user: {
+					notify: true
+				},
+
+				game: {
+					notify: true,
+					value: {},
+					observer: "_gameChanged"
+				},
+
+				playedTiles: {
+					value: []
+				},
+
+				savedGame: {
+					notify: true,
+					value: new Object()
+				},
+
+				tempPoints: {
+					notify: true,
+					value: [0, 0]
+				},
+
+				playedWord: {
+					value: ""
+				},
+
+				gameTurn: {
+					notify: true,
+					value: -1,
+					observer: "_onGameTurnChanged"
+				},
+
+				animationConfig: {
+					value: function(){
+						return {
+							'entry': [{
+									name: 'hero-animation',
+									id: 'hero',
+									toPage: this
+								},
+								{
+									name: 'fade-in-animation',
+									node: this.$.header
+								},
+								{
+									name: 'slide-from-top-animation',
+									node: this.$.header
+								}
+							],
+							'exit': [
+								{
+									name: 'slide-up-animation',
+									node: this.$.header
+								},
+								{
+									name: 'fade-out-animation',
+									node: this
+								},
+								{
+									name: 'hero-animation',
+									id: 'hero',
+									fromPage: this
+								}
+							]
+						}
+					}
+				},
+
+				sharedElements: {
+					value: function(){
+						return {
+							'hero' : this.$.content
+						}
+					}
+				}
+			},
+
+			_onGameTurnChanged: function(){
+				if(this.gameTurn == -1)
+					return;
+				else if(this.game && this.game.players && this.game.players[this.gameTurn] && this.user && this.user.id && this.game.players[this.gameTurn].id != this.user.id)
+					return;
+
+				this.clearCharactersWithPromise()
+				.then(function(){
+					console.log("All characters cleared!");
+
+					var turn = this.gameTurn;
+					var next = turn == 0 ? 1 : 0;
+					console.log("Turn changed!", this.gameTurn);
+
+
+					this.set("game", this.savedGame);
+					this.set("game.turn", turn);
+					this.set("game.next", next);
+				}.bind(this));
+			},
+
+			_somnOnTop: function(){
+				console.log("Something on top!");
+			},
+
+			_playerFaceTapped: function(e){
+				switch(e.model.index){
+					case this.game.turn:
+						this._showTurnMessage()
+						break;
+					case this.game.next:
+						this._showLastPlayedMessage()
+						break;
+				}
+			},
+
+			_isPlayed: function(played){
+				return played ? "played" : "";
+			},
+
+			_wasLastPlayed: function(lastplayed){
+				return lastplayed ? "lastplayed" : "";
+			},
+
+			_gameChanged: function(){
+				// console.log(this.game);
+				if(this.game && this.game.id){
+					var self = this;
+					setTimeout(function(){
+						self._showTurnMessages()
+					}, 800);
+				}
+			},
+
+			_showTurnMessages: function(){
+				this._showTurnMessage();
+
+				setTimeout(function(){
+					this._showLastPlayedMessage();	
+				}.bind(this), 320);
+			},
+
+			_showTurnMessage: function(){
+				if(!this.game || !this.game.players)
+					return;
+
+				var pt = this.game.players[this.game.turn];
+				var toastTurn = this.$.toastTurn;
+
+				if(this.game.turn == 1){
+					toastTurn = this.$.toastNext;
+				}
+
+				if(pt.id == this.user.id)
+					toastTurn.innerHTML = "It\'s your turn";
+				else
+					toastTurn.innerHTML = "It\'s " + pt.name +"'s turn";
+
+				toastTurn.show();
+			},
+
+			_showLastPlayedMessage: function(){
+				var pn = this.game.players[this.game.next];
+				var toastNext = this.$.toastNext;
+
+				if(this.game.turn == 1){
+					toastNext = this.$.toastTurn;
+				}
+
+				if(this.game.words && this.game.words.length){
+					if(pn.id != this.user.id)
+						toastNext.innerHTML = pn.name + " played <strong>"+this.game.lastword+"</strong>";
+					else
+						toastNext.innerHTML = "You played <strong>"+this.game.lastword+"</strong>";
+
+					toastNext.show();
+
+					setTimeout(function(){
+						this._wobblePlayedTiles();	
+					}.bind(this), 580);
+				}
+			},
+
+			_wobblePlayedTiles: function(){
+				var lastPlayedTiles = this.$.content.querySelectorAll(".lastplayed");
+
+				TweenMax.to(lastPlayedTiles, 0.08, {scale : 1.1, rotation : -5});
+				TweenMax.to(lastPlayedTiles, 0.08, {scale : 1, rotation : 5, delay : 0.08});
+				TweenMax.to(lastPlayedTiles, 0.08, {scale : 1.1, rotation : -5, delay : 0.2});
+				TweenMax.to(lastPlayedTiles, 0.08, {scale : 1, rotation : 0, delay : 0.25});
+			},
+
+			_getTempPoints: function(points, idx){
+				return points.base[idx];
+			},
+
+			_getIsPlaying: function(len){
+				return parseInt(len) > 0 ? "active" : "";
+			},
+
+			playTile: function(e){
+				if(this.playedTiles <= 0){
+					this.set("tempPoints.0", this.game.players[0].points);
+					this.set("tempPoints.1", this.game.players[1].points);
+				}
+
+				this.playSound();
+				var tile = e.model.tile;
+				var fromTile = e.currentTarget;
+				var fromBox = fromTile.getBoundingClientRect();
+				tile.fromIndex = e.model.index;
+				TweenMax.to("#profiles", 0.35, {x: -100+"%", ease:Power4.easeOut});
+				this.push("playedTiles", tile);
+				this.set("game.tiles."+e.model.index+".played", true);
+				this.set("game.tiles."+e.model.index+".temp_owner", this.game.turn);
+				
+				this.makeWord();
+				this.updatePoints(tile, false);
+
+				setTimeout(function(){
+					var toTile = this.$.droparea.querySelectorAll(".tile")[this.playedTiles.length - 1];
+					var toBox = toTile.getBoundingClientRect();
+					
+					var dy = fromBox.top - toBox.top;
+					var dx = fromBox.left - toBox.left;
+
+					var transform = "translate3d("+dx+"px, "+dy+"px, 0)";
+
+
+					toTile.classList.add("moving");
+
+					TweenMax.from(toTile, 0.15, {opacity: 0, y: dy, x: dx, ease:Power4.easeOut});
+
+
+					setTimeout(function(){
+						toTile.classList.remove("moving");
+					}, 200)
+				}.bind(this), 2);
+			},
+
+			removeTileWithPromise: function(tile){
+				var self = this;
+
+				return new Promise(function(resolve, reject) {
+					var fromTile = self.$.droparea.querySelectorAll("lp-tile")[tile.index];
+
+					self.updatePoints(tile, true);
+					var toTile = Polymer.dom(self.root).querySelectorAll("#content lp-tile")[tile.fromIndex];
+					var fromBox = fromTile.getBoundingClientRect();
+					var toBox = toTile.getBoundingClientRect();
+					
+					var dy = fromBox.top - toBox.top;
+					var dx = fromBox.left - toBox.left;
+
+					var transform = "translate3d("+dx+"px, "+dy+"px, 0)";
+
+					self.splice("playedTiles", tile.index, 1);
+					self.set("game.tiles."+tile.fromIndex+".played", false);
+					// self.set("game.tiles."+tile.fromIndex+".owner", self.turn);
+
+					self.makeWord();
+					toTile.classList.add("moving");
+
+					TweenMax.from(toTile, 0.35, {opacity: 0, y: dy, x: dx, ease:Power4.easeOut});
+					
+					setTimeout(function(){
+						toTile.classList.remove("moving");
+						resolve();
+					}, 120);
+				});
+			},
+
+			removeTile: function(e){
+				var tile;
+				var fromTile;
+
+				if(e.model){
+					tile = e.model.tile;
+					fromTile = e.currentTarget;
+					tile.index = e.model.index;
+					this.playSound();
+				}else{
+					tile = e;
+					fromTile = this.$.droparea.querySelectorAll("lp-tile")[tile.index];
+				}
+
+				this.updatePoints(tile, true);
+				var toTile = Polymer.dom(this.root).querySelectorAll("#content lp-tile")[tile.fromIndex];
+				var fromBox = fromTile.getBoundingClientRect();
+				var toBox = toTile.getBoundingClientRect();
+				
+				var dy = fromBox.top - toBox.top;
+				var dx = fromBox.left - toBox.left;
+
+				var transform = "translate3d("+dx+"px, "+dy+"px, 0)";
+
+				this.splice("playedTiles", tile.index, 1);
+				this.set("game.tiles."+tile.fromIndex+".played", false);
+				// this.set("game.tiles."+tile.fromIndex+".owner", this.turn);
+
+				this.makeWord();
+				toTile.classList.add("moving");
+
+				TweenMax.from(toTile, 0.35, {opacity: 0, y: dy, x: dx, ease:Power4.easeOut});
+				
+				setTimeout(function(){
+					toTile.classList.remove("moving");
+				}, 120);
+			},
+
+			updatePoints: function(tile, reverse){
+				var turn = this.game.turn;
+				var next = this.game.next;
+				var turnPoints = parseInt(this.tempPoints[turn]);
+				var nextPoints = parseInt(this.tempPoints[next]);
+				// console.log(turn);
+
+				if(tile.owner == turn || tile.locked)
+						return;
+
+				if(!reverse){
+					turnPoints+=1;
+					if(tile.owner == next && nextPoints > 0)
+						nextPoints-=1;
+				}else{
+					turnPoints-=1;
+					if(tile.owner == next)
+						nextPoints+=1;
+				}
+
+				this.set("tempPoints."+turn, turnPoints);
+				this.set("tempPoints."+next, nextPoints);
+				// console.log(this.tempPoints);
+			},
+
+			makeWord: function(){
+				var tiles = this.playedTiles;
+				var tileLetters = new Array();
+
+				for (var i = 0; i < tiles.length; i++) {
+					tileLetters.push(tiles[i].letter);
+				};
+
+				this.set("playedWord", tileLetters.join(""));
+			},
+
+			clearButtonClicked: function(){
+				this.clearCharacters(false);
+			},
+
+			clearCharacters: function(updateGame){
+				var tiles = this.playedTiles;
+				var i = 0;
+				while (i < this.playedTiles.length) {
+					var tile = this.playedTiles[i];
+					tile.index = i;
+					var fromTile = Polymer.dom(this.$.droparea).querySelectorAll(".tile")[i];
+					var toTile = Polymer.dom(this.root).querySelectorAll("#content .tile")[tile.fromIndex];
+
+					if(updateGame){
+						this.set("game.tiles."+tile.fromIndex+".owner", this.game.turn);
+						this.set("savedGame.tiles."+tile.fromIndex+".owner", this.game.turn);
+
+						this.set("game.tiles."+tile.fromIndex+".owner", this.game.turn);
+						this.set("savedGame.tiles."+tile.fromIndex+".owner", this.game.turn);
+
+						this.set("game.tiles."+tile.fromIndex+".lastplayed", true);
+						this.set("savedGame.tiles."+tile.fromIndex+".lastplayed", true);
+					}
+
+					this.removeTile(tile);
+
+					setTimeout(function(){
+						i++
+					}, 120);
+				};
+
+				if(updateGame){
+					var image = this._drawTilesImage(this.game.tiles, this.game.theme.colors);
+					// console.log(image);
+					this.set("game.lastupdated", new Date());
+					this.switchTurns(this.game.turn);
+					this.set("savedGame.lastupdated", new Date());
+					this.set("savedGame.summary_image", image);
+					// this.$.gameDocument.data = this.game;
+					// this.$.gameDocument.save("/games");
+
+					this.$.gameDocument.save("/games", this.savedGame.id)
+					.then(function(){
+						console.log("Game saved!");
+					})
+					.catch(function(error){
+						console.log("Error, ", error);
+					});
+				}
+			},
+
+			clearCharactersWithPromise: function(){
+				var tiles = this.playedTiles;
+				var self = this;
+
+				return new Promise(function(resolve, reject) {
+					if(!tiles.length)
+						resolve();
+					else{
+						var i = 0;
+						while (i < this.playedTiles.length) {
+							var tile = this.playedTiles[i];
+							tile.index = i;
+							var fromTile = Polymer.dom(this.$.droparea).querySelectorAll(".tile")[i];
+							var toTile = Polymer.dom(this.root).querySelectorAll("#content .tile")[tile.fromIndex];
+
+							self.removeTileWithPromise(tile)
+							.then(function(){
+								console.log("Tile removed!");
+								i++;
+							})
+							.catch(function(error){
+								console.log(error);
+							});
+						}
+          				resolve();
+					}
+          		}.bind(this));
+			},
+
+			submitWord: function(){
+				if(this.game.players[this.game.turn].id != this.user.id){
+					this.$.toastMessage.show("It's not your turn", {duration: 500});
+					return;
+				}
+
+				if(!this.validateWord(this.playedWord))
+					return;
+
+				if(!this.game.words){
+					this.game.words = [];
+					this.set("savedGame.words", []);
+				}
+
+				this.push("game.words", {word: this.playedWord, player: this.game.turn});
+				this.set("game.lastword", this.playedWord);
+				this.set("game.players.0.points", this.tempPoints[0]);
+				this.set("game.players.1.points", this.tempPoints[1]);
+
+				this.push("savedGame.words", {word: this.playedWord, player: this.game.turn});
+				this.set("savedGame.lastword", this.playedWord);
+				this.set("savedGame.players.0.points", this.tempPoints[0]);
+				this.set("savedGame.players.1.points", this.tempPoints[1]);
+
+				for (var i = 0; i < this.game.tiles.length; i++) {
+					this.set("game.tiles."+i+".lastplayed", false);
+					this.set("savedGame.tiles."+i+".lastplayed", false);
+				};
+
+				this.clearCharacters(true);
+			},
+
+			switchTurns: function(turn){
+				var tempTurn = this.game.turn;
+
+				this.set("game.turn", this.game.next);
+				this.set("savedGame.turn", this.game.next);
+				this.set("game.next", tempTurn);
+				this.set("savedGame.next", tempTurn);
+			},
+
+			playSound: function(which){
+				var audio = new Audio();
+		        audio.src = "./src/push.mp3";
+		        audio.addEventListener("ended", function () {
+		            // console.log(this);
+		        }, false);
+		        audio.play();
+			},
+
+			openMenu: function(e){
+				var el = e.target;
+				var from = el.getBoundingClientRect();
+				this.$.menu.show(from);
+			},
+
+			screenshotGame: function(){
+				// html2canvas(document.querySelector("game-page")).then(function(canvas) {
+		  //           // document.body.appendChild(canvas);
+		  //           console.log(canvas.toDataURL());
+		  //       }.bind(this));
+			},
+
+			_isActive: function(idx, turn){
+				return idx == turn;
+			},
+
+			goHome: function(){
+				this.fire("go-home", {game: this.game});
+			},
+
+			_getColor: function(theme, idx){
+				return theme.colors[idx];
+			},
+
+			_getBg: function(colors, owner, locked){
+				var defaultColor = "#f0f0f0";
+				return getTileBg(colors, owner, locked, defaultColor);
+			},
+
+			_getTextColor: function(owner){
+				return owner >= 0 ? "#fff" : "#000";
+			},
+
+			_drawTilesImage: function(tiles, colors){
+				// var tiles = tiles.base;
+				var canvas = document.createElement("canvas");
+				var ctx = canvas.getContext("2d");
+				canvas.width = 50;
+				canvas.height = 50;
+
+				var space = 0;
+				ctx.fillStyle = "#000";
+				ctx.fillRect(0, 0, (50 + space), (50 + space));
+				ctx.fillStyle = "#f0f0f0";
+
+				for(var i = 0; i < tiles.length; i++){
+					var tile = tiles[i];
+					var x = (i % 5)*10 + (space * (i%5)) + space;
+					var y = Math.floor(i / 5)*10 + space;
+					id = i + 1;
+
+					// var defaultColor = "#f0f0f0";
+					var defaultColor = i%2 == 0 ? "#f0f0f0" : "#eee";
+					var fillColor = getTileBg(colors, tile.owner, tile.locked, defaultColor);
+					ctx.fillStyle = fillColor;
+					ctx.fillRect(x, y, (10 - space), (10 - space));
+					// console.log(tile.owner);
+				}
+
+				return canvas.toDataURL();
+			},
+
+			validateWord: function(word){
+				var nonEnglish = this.dictionary.indexOf(word.toLowerCase()) < 0;
+
+				if(!nonEnglish){
+					var donePlayedOrSubstring = this._checkIsPlayedOrSubstring(word);
+					if(!donePlayedOrSubstring.status)
+						return true;
+					else{
+						if(donePlayedOrSubstring.status){
+							this.$.toastMessage.show(donePlayedOrSubstring.reason);
+
+							return false;
+						}
+					}
+				}else{
+					this.$.toastMessage.show(word + " is not in dictionary");
+				}
+			},
+
+			_checkIsPlayedOrSubstring: function(word){
+				var words = this.game.words;
+
+				if(!words || !words.length){
+					return {status: false};
+				}
+
+
+				for (var i = 0; i < words.length; i++) {
+					if(words[i].word == word){
+						return {status: true, reason: word + " already played"};
+					}
+					else if(words[i].word.indexOf(word) >= 0){
+						return {status: true, reason: word + " is a subword of " + words[i].word};
+					}
+				};
+
+				return false;
+			}
+		});
+	</script>
+</dom-module>

@@ -1,0 +1,141 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../bower_components/neon-animation/neon-animatable-behavior">
+<link rel="import" href="../bower_components/neon-animation/neon-animation-runner-behavior">
+<link rel="import" href="../bower_components/neon-animation/neon-animations">
+
+<link rel="import" href="tween-max.html">
+<dom-module id="lp-toast">
+	<template>
+		<style>
+			:host {
+				display: inline-block;
+				position: absolute;
+				left: 30px;
+				top: 30px;
+				z-index: 999999999;
+				padding: 15px 10px;
+				background: #fff;
+				font-size: 15px;
+				line-height: 15px;
+				box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.26);
+				border-radius: 10px;
+				max-width: 180px;
+				opacity: 0;
+				pointer-events: none;
+			}
+			:host(.show){
+				opacity: 1
+			}
+			:host strong{
+				text-transform: uppercase !important;
+				font-weight: bolder; 
+				/*font-size: 24px;*/
+			}
+		</style>
+
+		{{message}}
+		<content></content>
+	</template>
+	<script>
+		Polymer({
+			is: 'lp-toast',
+			behaviors: [
+		      Polymer.NeonAnimatableBehavior,
+		      Polymer.NeonAnimationRunnerBehavior
+		    ],
+		    listeners: {
+		    	'neon-animation-finish' : "_onNeonAnimationFinish"
+		    },
+			properties: {
+				message: {
+					notify: true
+				},
+				animation: {
+					notify: true,
+					value: "default"
+				},
+				animationConfig: {
+					computed: "_getAnimation(animation)"
+				},
+				open: {
+					value: false
+				},
+				duration: {
+					value: 1500
+				}
+			},
+			show: function(content, config){
+				config = config || {};
+
+				this.open = true;
+
+				var duration = duration || 1500;
+				var toast = this;
+
+				if(content && content.length)
+					this.message = content;
+
+				if(config.duration)
+					this.duration = config.duration;
+
+				this.playAnimation('entry');
+			},
+			hide: function(duration){
+				this.open = false;
+				this.playAnimation('exit');
+			},
+			_onNeonAnimationFinish: function(){
+				if(this.open){
+					this.classList.add("show");
+					
+					setTimeout(function(){
+						this.hide();
+					}.bind(this), this.duration);
+				}
+				else{
+					this.set("message", "");
+					this.classList.remove("show");
+				}
+			},
+
+			_getAnimation: function(animation){
+				if(!animation || !animation.length)
+					return;
+
+				switch(animation){
+					case "default":
+						return this._defaultAnimation()
+					case "swing":
+						return this._swingAnimation()
+				}
+			},
+
+			_defaultAnimation: function(){
+				return {
+					'entry': [
+						{name: 'fade-in-animation', node: this},
+						{name: 'slide-from-top-animation', node: this}],
+					'exit': [
+						{name: 'fade-out-animation',node: this},
+						{name: 'slide-up-animation',node: this}]};
+			},
+
+			_swingAnimation: function(){
+				return {
+					'entry': [
+						{name: 'fade-in-animation',node: this},
+						{name: 'transform-animation',
+						transformFrom: "translate3d(0, -200px, 0) rotate(-30deg)",
+						transformTo: "translate3d(0, 0, 0) rotate(0)",
+						node: this}],
+					'exit': [
+						{name: 'fade-out-animation',node: this},
+						{name: 'transform-animation',
+						transformFrom: "translate3d(0, 0, 0) rotate(0)",transformTo: "translate3d(0, -200px, 0) rotate(30deg)",
+						node: this}]};
+			}
+		});
+	</script>
+</dom-module>
